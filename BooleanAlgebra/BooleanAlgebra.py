@@ -171,7 +171,7 @@ class Node():
                     # Node is a input
                     val = val or inputs[child]
             
-            return val 
+            return int(val) 
         
         # Repeat process for other operators
         elif self.operator == "*":
@@ -182,11 +182,11 @@ class Node():
                 else:
                     val = val and inputs[child]
     
-            return val
+            return int(val)
         
         elif self.operator == "'":
             # Not should only ever have one child
-            return not self.Children[0].eval(inputs) if type(self.Children[0]) == Node else not inputs[self.Children[0]]    
+            return int(not self.Children[0].eval(inputs) if type(self.Children[0]) == Node else not inputs[self.Children[0]])    
 
 def compare(statement1:str, statement2:str):
     
@@ -238,8 +238,35 @@ def compare(statement1:str, statement2:str):
         print("Statements are identical")
     else:
         print("Statements are NOT identical")
-        print("{0:5} Failures encountered".format(fails))
+        print("Failures encountered: {0:<5} ".format(fails))
 
+def truthTable(statement:str):
+    
+    inputChars = []
+    
+    # statement1 is assumed to have more or equivalent inputs than statement2
+    for char in statement:
+        if char not in inputChars and char in PossibleInputs:
+            inputChars.append(char) 
+        
+    # Sort to make sure inputs are kept inline
+    inputChars.sort()
+    
+    statement = constructTree(statement)
+    
+    combis = [list(i) for i in itertools.product([0, 1], repeat=len(inputChars))]
+    
+    print(*inputChars,"|","X")
+    
+    for comb in combis:
+        InputDict = {}
+        
+        # Construct input dictionary for combination
+        for i,val in enumerate(inputChars):
+            InputDict[val] = comb[i]
+            
+        print(*comb,"|",statement.eval(InputDict))
+            
 # Primary loop
 run = True
 
@@ -283,6 +310,10 @@ while(run):
         print(" - compare")
         print("   ~prompts for two boolean statements to be entered and will then")
         print("    have their truth tables compared")
+        print(" - table")
+        print("   ~prompts the user to enter a boolean statement, the truth table")
+        print("    for the defined expression will then be generated")
         
-    elif func == "test":
-        eval(input())
+    elif func == "table":
+        statement = convert(input("Boolean Statement: "))
+        truthTable(statement)
