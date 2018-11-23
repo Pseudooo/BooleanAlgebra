@@ -4,35 +4,24 @@ import itertools
 PossibleInputs = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 def convert(statement:str):
+    
     '''
-    Convert function will take a user inputted function and convert it
-    into an easier to manipulate string. This will happen primarily
-    by converting things like AB into A*B allowing for easier construction
-    of operator tree.
+    Conversion of a string function will take a user-inputted function
+    that is potentially "messy" and convert it to something that is easier
+    to manage when constructing the operator tree
     '''
     
-    # First char will be skipped in iteration so init with first char
+    # Reconstruction of a statement should never influence the first character
     newStatement = statement[0]
     
-    # Iterate through remaining characters of expression
+    # Iterate through characters of statement and decide if * should be injected
     for i,char in enumerate(statement[1:]):
-        
-        '''
-        Loop will function by iterating through characters in the expr
-        and checking the previous char to determine if a * needs to be
-        placed
-        '''
         if char in PossibleInputs or char == "(":
-            # Character is a letter or (
-            if statement[i] in PossibleInputs or statement[i] == "'" or statement[i] == ")":
-                
-                # Instances checked require * inserted
+            prevChar = statement[i]
+            if prevChar in PossibleInputs or prevChar == "'" or prevChar == ")":
+                # * should be injected
                 newStatement+="*"
-        
-        # Reconstruct initial statement appropriately
         newStatement+=char
-        
-    # Return the reconstructed statement
     return newStatement
                 
 def constructInputsDict(statement:str):
@@ -82,6 +71,34 @@ def getFreeOperator(statement:str, operator):
     # Return the found index or None if not found
     return index
         
+def cleanBrackets(statement:str):
+    '''
+    Clean brackets function will remove any unrequired brackets
+    from a boolean expression.
+    '''
+    
+    run = True
+    while statement[0] == "(" and statement[-1] == ")" and run == True:
+            
+            innerStatement = statement[1:-1]
+            depth = 1
+            for char in innerStatement:
+                if char == "(":
+                    depth+=1
+                elif char == ")":
+                    depth-=1;
+                    
+                if depth == 0:
+                    break
+                    
+            if depth == 1:
+                statement = innerStatement
+            else:
+                run = False
+            # Once the depth at the end has been decided
+            
+    return statement
+    
 def constructTree(statement:str):
     
     '''
@@ -92,29 +109,12 @@ def constructTree(statement:str):
     constructed branch.
     '''
     
+    # Remove redundant brackets from expression, ie (A+B) is A+B
+    statement = cleanBrackets(statement)
+    
     if len(statement) == 1:
         # Length of 1 means that the branch is full evaluated
         return statement
-    
-    # Remove redundant brackets from expression, ie (A+B) is A+B
-    while statement[0] == "(" and statement[-1] == ")":
-        # Skip first char as it's already known as ( and init depth of 1
-        depth = 1
-        for i,char in enumerate(statement[1:]):
-            if char == "(": # Handle depth
-                depth+=1
-            elif char == ")":
-                depth-=1
-                
-            # If depth of 0 is reached at the end then return the statement 
-            # with outer brackets removed
-            if depth == 0 and i == len(statement)-2:
-                statement = statement[1:-1]
-                break
-            
-            elif depth == 0:
-                # Depth of 0 reached before end so edge case such as (A)+(B)
-                break
     
     # Order of operations is to be taken backwards to ensure appropriate
     # construction/evaluation of the tree
@@ -288,6 +288,7 @@ while(run):
         # Command allowing user to evaluate a boolean algebra statement
         # with defined inputs
         statement = convert(input("Boolean statement: "))
+        print(statement)
         inputs = constructInputsDict(statement)
         statementTree = constructTree(statement)
         print(statementTree.eval(inputs))
