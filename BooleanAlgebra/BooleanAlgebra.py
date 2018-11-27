@@ -137,7 +137,10 @@ def constructTree(statement:str):
         # In the instance of a not operator it will only have one child
         # of which will be entirely to the left due to order of node
         # construction
-        return Node("'", [constructTree(statement[:-1])])
+        return Node("'", constructTree(statement[:-1]))
+    
+    print("end?")
+    print(statement)
         
 # Node class will be used to structure the tree
 class Node():
@@ -186,7 +189,7 @@ class Node():
         
         elif self.operator == "'":
             # Not should only ever have one child
-            return int(not self.Children[0].eval(inputs) if type(self.Children[0]) == Node else not inputs[self.Children[0]])
+            return int(not self.Children.eval(inputs))
         
         elif self.operator == "v":
             # The value of the child
@@ -195,7 +198,7 @@ class Node():
             else:
                 return int(inputs[self.Children])
 
-def compare(statement1:str, statement2:str):
+def compare(statement1:str, statement2:str, printFailures=True):
     
     '''
     Compare function will compare two inputted statements, generate a truth table for each
@@ -214,16 +217,17 @@ def compare(statement1:str, statement2:str):
     inputChars.sort()
         
     # Construct trees
-    statement1 = constructTree(statement1)
-    statement2 = constructTree(statement2)
+    statement1 = constructTree(convert(statement1))
+    statement2 = constructTree(convert(statement2))
     
     # A list of combination(s)  
     combis = [list(i) for i in itertools.product([0, 1], repeat=len(inputChars))]
     
     # init failure count
     fails = 0
-        
-    print("Testing...")
+    
+    if printFailures == True:    
+        print("Testing...")
         
     # Iterate through combinations
     for comb in combis:
@@ -237,15 +241,20 @@ def compare(statement1:str, statement2:str):
         if statement1.eval(InputDict) != statement2.eval(InputDict):
             # failed, notify users of failure values
             fails+=1
-            print("Failure with parameters:")
-            print(" ".join([char+"="+str(InputDict[char]) for char in InputDict.keys()]))
+            if printFailures == True:
+                print("Failure with parameters:")
+                print(" ".join([char+"="+str(InputDict[char]) for char in InputDict.keys()]))
             
     # Testing complete, notify failure count or if success
     if fails == 0:
-        print("Statements are identical")
+        if printFailures == True:
+            print("Statements are identical")
+        return True
     else:
-        print("Statements are NOT identical")
-        print("Failures encountered: {0:<5} ".format(fails))
+        if printFailures == True:
+            print("Statements are NOT identical")
+            print("Failures encountered: {0:<5} ".format(fails))
+        return False
 
 def truthTable(statement:str):
     
@@ -295,7 +304,6 @@ while(run):
         # Command allowing user to evaluate a boolean algebra statement
         # with defined inputs
         statement = convert(input("Boolean statement: "))
-        print(statement)
         inputs = constructInputsDict(statement)
         statementTree = constructTree(statement)
         print(statementTree.eval(inputs))
@@ -321,7 +329,41 @@ while(run):
         print(" - table")
         print("   ~prompts the user to enter a boolean statement, the truth table")
         print("    for the defined expression will then be generated")
+        print(" - checksteps")
+        print("   ~prompts the user to enter a boolean expression, the user will")
+        print("    the be required to enter n more statements and each will be checked")
+        print("    and if an incorrect step is entered the user will be notified")
+        print("    is useful to check working(s) out for a simplification.")
         
     elif func == "table":
         statement = convert(input("Boolean Statement: "))
         truthTable(statement)
+        
+    elif func == "checksteps":
+        # Check steps will let the user enter all of their steps.
+        
+        print("Type break when you're finished entering steps")
+        
+        initExpr = input("Initial Expression: ")
+        
+        step = 1
+        prevExpr = initExpr
+        
+        moreSteps = True
+        while moreSteps:
+            expr = input("Step {0}: ".format(step))
+            
+            if expr.lower() == "break":
+                moreSteps = False
+                print("All steps are were correct!")
+            else:
+                step+= 1
+                
+                if compare(initExpr, expr, False) == False:
+                    print("Invalid Step!")
+                    print(prevExpr,"!=",expr)
+                    moreSteps = False
+            prevExpr = expr
+    else:
+        print("Invalid Commmand!")
+        print("Type help")
