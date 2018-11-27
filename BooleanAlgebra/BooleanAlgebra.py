@@ -16,9 +16,9 @@ def convert(statement:str):
     
     # Iterate through characters of statement and decide if * should be injected
     for i,char in enumerate(statement[1:]):
-        if char in PossibleInputs or char == "(":
+        if char in PossibleInputs or char == "(" or char in ["0","1"]:
             prevChar = statement[i]
-            if prevChar in PossibleInputs or prevChar == "'" or prevChar == ")":
+            if prevChar in PossibleInputs or prevChar == "'" or prevChar == ")" or prevChar in ["0","1"]:
                 # * should be injected
                 newStatement+="*"
         newStatement+=char
@@ -114,7 +114,7 @@ def constructTree(statement:str):
     
     if len(statement) == 1:
         # Length of 1 means that the branch is full evaluated
-        return statement
+        return Node("v", statement)
     
     # Order of operations is to be taken backwards to ensure appropriate
     # construction/evaluation of the tree
@@ -141,7 +141,7 @@ def constructTree(statement:str):
         
 # Node class will be used to structure the tree
 class Node():
-    def __init__(self, Operator:str, Children:list):
+    def __init__(self, Operator:str, Children):
         # One global node with a defined operator
         self.operator = Operator        
         self.Children = Children
@@ -186,7 +186,14 @@ class Node():
         
         elif self.operator == "'":
             # Not should only ever have one child
-            return int(not self.Children[0].eval(inputs) if type(self.Children[0]) == Node else not inputs[self.Children[0]])    
+            return int(not self.Children[0].eval(inputs) if type(self.Children[0]) == Node else not inputs[self.Children[0]])
+        
+        elif self.operator == "v":
+            # The value of the child
+            if self.Children.isdigit():
+                return int(self.Children)
+            else:
+                return int(inputs[self.Children])
 
 def compare(statement1:str, statement2:str):
     
